@@ -1,4 +1,4 @@
-# DiscordRustScraper
+# DiscordWebhookProxy
 [![Rust-Proxy-Banner.png](https://i.postimg.cc/Pq6cbg7T/Rust-Proxy-Banner.png)](https://postimg.cc/FfLDNBmB)
 <p align="center">
 	WIP
