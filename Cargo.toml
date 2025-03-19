@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-minreq = "2.13.3"
+minreq = { version = "2.7", features = ["https"] }
 rocket = { version = "0.5.1", default-features = false, features = ["json"] }
