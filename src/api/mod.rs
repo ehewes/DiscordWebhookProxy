@@ -1,5 +1,6 @@
-pub mod routes;
 pub(super) mod structs;
+pub mod discord;
+pub mod webhook_queue;
 
 use rocket::{
     http::Status,
@@ -26,6 +27,13 @@ impl ApiError {
             code: status.code,
             message: message.into(),
         }
+    }
+
+    pub fn message<S>(status: Status, message: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self::new(status, message)
     }
 }
 

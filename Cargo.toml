@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 minreq = { version = "2.7", features = ["https"] }
 rocket = { version = "0.5.1", default-features = false, features = ["json"] }
+tokio = "1.44.1"
+time = "0.3.40"
+serde_json = "1.0.140"
+sled = "0.34"
