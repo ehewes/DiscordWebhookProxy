@@ -1,7 +1,16 @@
 [package]
 name = "discord-webhook-proxy"
-version = "0.1.0"
+version = "1.0.0"
+
 edition = "2024"
+authors = ["ehewes, bordomantra"]
+description = "DiscordWebhook Proxy is a simple webhook proxy that allows you to send messages to a discord channel using a webhook URL. Utilises a queuing system to ensure all messages are send follwing ratelimits."
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/ehewes/DiscordRustScraper"
+repository = "https://github.com/ehewes/DiscordRustScraper"
+keywords = ["cli", "discord", "bot", "webhook", "proxy"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 minreq = { version = "2.7", features = ["https"] }
