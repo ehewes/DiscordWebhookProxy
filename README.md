@@ -11,7 +11,7 @@ DiscordWebhookProxy is a powerful Discord proxy service designed for Roblox, bui
 
 ---
 ## Commands & Usage
-### Commands
+### Deployment Commands
 #### Deploy with Docker
 Build the container
 ```bash
@@ -26,5 +26,23 @@ docker run -p 8000:8000 discord-webhook-proxy
 ```bash
 nix build .#dockerImage
 ```
+```bash
+nix run .#dockerImage
+```
 
-### WIP ( TBD )
+### Usage
+To utilise a domain for your webhook you'd have to point your domain to the server IP and port 8000. You can do this by creating a record in your DNS settings.
+
+``
+http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN
+``
+
+#### Curl Example
+```
+curl -X POST \
+  http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "content": "Hello, world!"
+}'
+```
