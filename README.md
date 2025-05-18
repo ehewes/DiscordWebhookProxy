@@ -1,7 +1,7 @@
 # DiscordWebhookProxy
 [![Rust-Proxy-Banner.png](https://i.postimg.cc/Pq6cbg7T/Rust-Proxy-Banner.png)](https://postimg.cc/FfLDNBmB)
 <p align="center">
-	WIP
+	<img alt="Crates.io Downloads" src="https://img.shields.io/crates/d/discord-webhook-proxy?label=crates.io%20downloads" />
 </p>
 
 ---
