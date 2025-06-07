@@ -6,6 +6,10 @@
   };
 
   outputs = inputs:
+    let
+      localPackages = import ./packages/nixos/package.nix;
+      localNixosModules = import ./packages/nixos/nixos-module.nix;
+    in
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
       perSystem = { config, self', pkgs, lib, system, ... }:
@@ -37,12 +41,15 @@
 			  LD_LIBRARY_PATH = "${lib.makeLibraryPath runtimeDeps}";
             };
         in {
-          _module.args.pkgs = import inputs.nixpkgs {
+		_module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [ (import inputs.rust-overlay) ];
           };
 
           devShells.default = mkDevShell pkgs.rust-bin.stable.latest.default;
+		  packages.default = localPackages.default;
         };
+
+		flake.nixosModules.default = localNixosModules.default;
     };
 }
