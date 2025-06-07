@@ -4,7 +4,7 @@ use super::{ApiResult, ApiError};
 use rocket::serde::json::serde_json;
 use rocket::{http::Status, serde::json::Json, State};
 
-#[post("/<webhook_id>/<webhook_token>", data = "<body>")]
+#[post("/webhook/<webhook_id>/<webhook_token>", data = "<body>")]
 pub async fn webhook_proxy(
     webhook_id: u64,
     webhook_token: &str,

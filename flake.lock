@@ -7,12 +7,12 @@
       },
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-6BLOJ97ovD94KpiTRvEh9EWzQ2Q2WJgSS/GIzblsfZ4=",
-        "path": "/nix/store/syd5pdcv27x33xa49hbwpfkkba15x7rr-source/packages/nixos",
+        "narHash": "sha256-O5rv5xJM2lZVt8r1r9mZzW8H7kJbxy96qAM8UNEy7Lw=",
+        "path": "/nix/store/0qd58affchgwki77k6xka7bvw94qcw8d-source/packages/nixos",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/syd5pdcv27x33xa49hbwpfkkba15x7rr-source/packages/nixos",
+        "path": "/nix/store/0qd58affchgwki77k6xka7bvw94qcw8d-source/packages/nixos",
         "type": "path"
       }
     },
