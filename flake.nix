@@ -3,6 +3,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     rust-overlay.url = "github:oxalica/rust-overlay";
+
+	discord-webhook-proxy.url = "./packages/nixos";
   };
 
   outputs = inputs:
@@ -37,12 +39,15 @@
 			  LD_LIBRARY_PATH = "${lib.makeLibraryPath runtimeDeps}";
             };
         in {
-          _module.args.pkgs = import inputs.nixpkgs {
+		_module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [ (import inputs.rust-overlay) ];
           };
 
           devShells.default = mkDevShell pkgs.rust-bin.stable.latest.default;
+		  packages.default = inputs.discord-webhook-proxy.packages.default;
         };
+
+		flake.nixosModules.default = inputs.discord-webhook-proxy.nixosModules.default; 
     };
 }

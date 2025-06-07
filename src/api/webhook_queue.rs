@@ -14,6 +14,7 @@ use tokio::{
 const FALLBACK_COOLDOWN_SECS: u64 = 10;
 const QUEUE_SIZE: usize = 50_000;
 const CONCURRENCY_LIMIT: usize = 10;
+const DEFAULT_SLED_DB_PATH: &str = "webhook-proxy-queue-db";
 
 pub type QueueSender = Sender<Webhook>;
 pub type QueueReceiver = Receiver<Webhook>;
@@ -28,7 +29,9 @@ pub struct Webhook {
 
 pub fn start_webhook_queue() -> QueueSender {
     let (queue_sender, queue_receiver) = channel::<Webhook>(QUEUE_SIZE);
-    let db = sled::open("webhook-proxy-queue-db").expect("Failed to open sled database");
+
+    let db_path = std::env::var("SLED_DB_PATH").unwrap_or(DEFAULT_SLED_DB_PATH.to_string());
+    let db = sled::open(db_path).expect("Failed to open sled database");
 
     tokio::spawn(async move {
         webhook_queue_handler(queue_receiver, Arc::new(db)).await;
@@ -52,7 +55,7 @@ async fn webhook_queue_handler(mut queue_receiver: QueueReceiver, db: Arc<Db>) {
                 id.to_be_bytes(),
                 serde_json::to_vec(&webhook).expect("Failed to deserialize webhook"),
             )
-                .expect("Failed to add webhook to queue");
+            .expect("Failed to add webhook to queue");
 
             loop {
                 let response = forward_webhook_request(webhook.id, &webhook.token, &webhook.body);
@@ -69,7 +72,7 @@ async fn webhook_queue_handler(mut queue_receiver: QueueReceiver, db: Arc<Db>) {
                             sleep(Duration::from_secs(retry_after)).await;
 
                             println!("queueed");
-                        },
+                        }
                         _ => {
                             db.remove(id.to_be_bytes())
                                 .expect("Failed to remove webhook from queue");
@@ -77,7 +80,7 @@ async fn webhook_queue_handler(mut queue_receiver: QueueReceiver, db: Arc<Db>) {
                             println!("queue done");
 
                             break;
-                        },
+                        }
                     },
                     Err(_) => continue,
                 }
