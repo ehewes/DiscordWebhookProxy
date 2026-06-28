@@ -1,0 +1,5 @@
+CREATE TABLE webhooks (
+    id SERIAL PRIMARY KEY,
+    discord_webhook_id BIGINT UNIQUE NOT NULL,
+    banned BOOLEAN NOT NULL DEFAULT FALSE
+);

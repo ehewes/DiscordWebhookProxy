@@ -1,6 +1,6 @@
-use rocket::post;
 use super::webhook_queue::{QueueSender, Webhook};
-use super::{ApiResult, ApiError};
+use super::{ApiError, ApiResult};
+use rocket::post;
 use rocket::serde::json::serde_json;
 use rocket::{http::Status, serde::json::Json, State};
 
@@ -28,14 +28,14 @@ pub async fn webhook_proxy(
                 })?;
 
             Ok((Status::Accepted, Json(serde_json::json!({"queued": true}))))
-        },
+        }
         _ => {
             let response_body: serde_json::Value =
                 serde_json::from_str::<serde_json::Value>(&response_body)
                     .map_or(serde_json::json!({}), |body| body);
 
             Ok((response_status, Json(response_body)))
-        },
+        }
     }
 }
 

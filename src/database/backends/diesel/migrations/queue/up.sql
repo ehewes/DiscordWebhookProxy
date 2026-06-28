@@ -1,13 +1,3 @@
--- Create an enum type for message status with only 'pending' and 'completed'
-CREATE TYPE status_type AS ENUM ('pending', 'completed');
-
--- Create the webhooks table (unchanged)
-CREATE TABLE webhooks (
-    id SERIAL PRIMARY KEY,
-    discord_webhook_id BIGINT UNIQUE NOT NULL,
-    banned BOOLEAN NOT NULL DEFAULT FALSE
-);
-
 -- Create the queue table with the updated status type
 CREATE TABLE queue (
     id SERIAL PRIMARY KEY,

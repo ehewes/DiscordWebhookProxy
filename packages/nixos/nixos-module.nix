@@ -1,39 +1,118 @@
-{ flakePackages }: 
-{ config, lib, pkgs, ... }: let
-	inherit (lib) mkIf mkEnableOption;
-	inherit (pkgs) system;
-in {
-	options.programs.discord-webhook-proxy = {
-  		enable = lib.mkEnableOption "discord-webhook-proxy";
+{ flakePackages }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
-		port = lib.mkOption {
-    		type = lib.types.str;
-			default = "8042";
-    		description = "";
-  		};
+let
+  inherit (lib)
+    mkEnableOption
+    mkOption
+    types
+    mapAttrs'
+    nameValuePair
+    filterAttrs
+    ;
 
-		sledDbPath = lib.mkOption {
-    		type = lib.types.str;
-    		description = "";
-  		};
-	};
+  inherit (pkgs) system;
 
-	config = mkIf config.programs.discord-webhook-proxy.enable {
-		systemd.services.discord-webhook-proxy = {
-			description = "Refract Backend";
+  cfg = config.programs.discord-webhook-proxy;
 
-      		serviceConfig = {
-        		Type = "simple";
-				Environment = [
-    				"ROCKET_PORT=${config.programs.discord-webhook-proxy.port}"
-    				"SLED_DB_PATH=${config.programs.discord-webhook-proxy.sledDbPath}"
-  				];
+  enabledInstances = filterAttrs (_: instance: instance.enable) cfg.instances;
+in
+{
+  options.programs.discord-webhook-proxy = {
+    package = mkOption {
+      type = types.package;
+      inherit (flakePackages.${pkgs.stdenv.hostPlatform.system}) default;
 
-				ExecStart = "${flakePackages.${system}.default}/bin/discord-webhook-proxy";
-        		Restart = "on-failure";
-      		};
+      description = "discord-webhook-proxy package override";
+    };
 
-			wantedBy = [ "multi-user.target" ];
-		};
-	};
+    instances = mkOption {
+      default = { };
+
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            enable = mkEnableOption "discord-webhook-proxy instance";
+
+            proxyServer = mkOption {
+              default = { };
+              description = "Webhook proxy server settings";
+
+              type = types.submodule {
+                options = {
+                  address = mkOption {
+                    type = types.str;
+                    default = "127.0.0.1";
+                    example = "127.0.0.1";
+
+                    description = "Address for the server to bind to";
+                  };
+
+                  port = mkOption {
+                    type = types.port;
+                    default = 8042;
+
+                    description = "Port for the server to listen on";
+                  };
+                };
+              };
+            };
+
+            database = mkOption {
+              default = { };
+              description = "Database configuration";
+
+              type = types.submodule {
+                options = {
+                  backend = mkOption {
+                    type = types.enum [
+                      "diesel"
+                      "sled"
+                    ];
+                    default = "diesel";
+
+                    description = "Database backend to use";
+                  };
+
+                  dataDirectory = mkOption {
+                    type = types.path;
+                    example = "/var/lib/discord-webhook-proxy";
+
+                    description = "Directory used to store database data";
+                  };
+                };
+              };
+            };
+          };
+        }
+      );
+    };
+
+    description = "discord-webhook-proxy instances";
+  };
+
+  config = {
+    systemd.services = mapAttrs' (
+      name: instance:
+      nameValuePair "discord-webhook-proxy-${name}" {
+        description = "Discord Webhook Proxy [${name}]";
+        wantedBy = [ "multi-user.target" ];
+
+        serviceConfig = {
+          Type = "simple";
+          Environment = [
+            "ROCKET_PORT=${toString instance.server.port}"
+            "ROCKET_ADDRESS=${instance.server.address}"
+          ];
+          ExecStart = "${lib.getExe flakePackages.${system}.default}";
+          Restart = "on-failure";
+        };
+      }
+    ) enabledInstances;
+  };
 }
