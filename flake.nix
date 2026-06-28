@@ -32,7 +32,7 @@
             overlays = [ (import inputs.rust-overlay) ];
           };
 
-          rustVersion = "1.96.0";
+          rustVersion = "1.93.0";
 
           rustToolchain = pkgs.rust-bin.stable.${rustVersion}.complete.override {
             targets = [ ];
