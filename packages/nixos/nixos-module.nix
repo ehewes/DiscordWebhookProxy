@@ -1,4 +1,4 @@
-{ flakePackages }:
+{ withSystem }:
 {
   config,
   lib,
@@ -16,19 +16,19 @@ let
     filterAttrs
     ;
 
-  inherit (pkgs) system;
-
-  cfg = config.programs.discord-webhook-proxy;
+  cfg = config.services.discord-webhook-proxy;
 
   enabledInstances = filterAttrs (_: instance: instance.enable) cfg.instances;
+
+  package = withSystem pkgs.stdenv.hostPlatform.system ({ config, ... }: config.packages.default);
 in
 {
-  options.programs.discord-webhook-proxy = {
+  options.services.discord-webhook-proxy = {
     package = mkOption {
       type = types.package;
-      inherit (flakePackages.${pkgs.stdenv.hostPlatform.system}) default;
+      default = package;
 
-      description = "discord-webhook-proxy package override";
+      description = "Package override";
     };
 
     instances = mkOption {
@@ -106,10 +106,10 @@ in
         serviceConfig = {
           Type = "simple";
           Environment = [
-            "ROCKET_PORT=${toString instance.server.port}"
-            "ROCKET_ADDRESS=${instance.server.address}"
+            "ROCKET_PORT=${toString instance.proxyServer.port}"
+            "ROCKET_ADDRESS=${instance.proxyServer.address}"
           ];
-          ExecStart = "${lib.getExe flakePackages.${system}.default}";
+          ExecStart = "${lib.getExe cfg.package}";
           Restart = "on-failure";
         };
       }

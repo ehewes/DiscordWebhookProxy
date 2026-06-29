@@ -10,19 +10,22 @@
   };
 
   outputs =
-    { self, flake-parts, ... }@inputs:
+    { flake-parts, ... }@inputs:
     let
       inherit (flake-parts.lib) importApply mkFlake;
     in
-    mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" ];
+    mkFlake { inherit inputs; } (
+      { withSystem, ... }:
+      {
+        systems = [ "x86_64-linux" ];
 
-      perSystem =
-        { pkgs, ... }:
-        {
-          packages.default = pkgs.callPackage ./package.nix { inherit pkgs; };
-        };
+        perSystem =
+          { pkgs, ... }:
+          {
+            packages.default = pkgs.callPackage ./package.nix { };
+          };
 
-      flake.nixosModules.default = importApply ./nixos-module.nix { flakePackages = self.packages; };
-    };
+        flake.nixosModules.default = importApply ./nixos-module.nix { inherit withSystem; };
+      }
+    );
 }

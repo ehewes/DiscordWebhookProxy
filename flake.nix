@@ -65,6 +65,11 @@
         in
         {
           devShells.default = mkDevShellRust rustToolchain;
+          packages.default = inputs.discord-webhook-proxy.packages.${system}.default;
         };
+
+      flake = {
+        nixosModules.default = inputs.discord-webhook-proxy.nixosModules.default;
+      };
     };
 }

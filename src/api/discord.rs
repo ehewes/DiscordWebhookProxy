@@ -28,8 +28,6 @@ pub async fn webhook_proxy(
                     ApiError::message(Status::InternalServerError, "Failed to queue request")
                 })?;
 
-            info!("Received request:\n- Webhook ID: {webhook_id}\n- Webhook Body: {body:#?}",);
-
             Ok((Status::Accepted, Json(serde_json::json!({"queued": true}))))
         }
         _ => {
@@ -60,6 +58,10 @@ pub fn forward_webhook_request(
         .as_str()
         .map_err(|_| ApiError::message(Status::InternalServerError, "Failed to encode the body"))?
         .to_string();
+
+    info!(
+        "Proxied request:\n- Webhook ID: {webhook_id}\n- Status Code: {response_status_code}\n- Webhook Body: {body:#?}"
+    );
 
     Ok((response_status_code, response_body, response))
 }
