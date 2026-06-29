@@ -14,7 +14,7 @@ use tokio::{
 const FALLBACK_COOLDOWN_SECS: u64 = 10;
 const QUEUE_SIZE: usize = 50_000;
 const CONCURRENCY_LIMIT: usize = 10;
-const DEFAULT_SLED_DB_PATH: &str = "webhook-proxy-queue-db";
+const DEFAULT_SLED_DB_PATH: &str = "/tmp/discord-webhook-proxy/data/queue-sled";
 
 pub type QueueSender = Sender<Webhook>;
 pub type QueueReceiver = Receiver<Webhook>;

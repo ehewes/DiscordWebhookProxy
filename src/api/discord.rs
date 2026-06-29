@@ -3,6 +3,7 @@ use super::{ApiError, ApiResult};
 use rocket::post;
 use rocket::serde::json::serde_json;
 use rocket::{State, http::Status, serde::json::Json};
+use tracing::info;
 
 #[post("/webhook/<webhook_id>/<webhook_token>", data = "<body>")]
 pub async fn webhook_proxy(
@@ -26,6 +27,8 @@ pub async fn webhook_proxy(
                 .map_err(|_| {
                     ApiError::message(Status::InternalServerError, "Failed to queue request")
                 })?;
+
+            info!("Received request:\n- Webhook ID: {webhook_id}\n- Webhook Body: {body:#?}",);
 
             Ok((Status::Accepted, Json(serde_json::json!({"queued": true}))))
         }
