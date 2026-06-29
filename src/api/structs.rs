@@ -1,4 +1,4 @@
-use rocket::serde::{Deserialize, Serialize};
+/* use rocket::serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -60,4 +60,4 @@ pub struct AllowedMentions {
     parse: Option<Vec<String>>,
     roles: Option<Vec<String>>,
     users: Option<Vec<String>>,
-}
+} */

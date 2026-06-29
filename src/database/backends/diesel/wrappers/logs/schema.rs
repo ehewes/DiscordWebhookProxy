@@ -1,11 +1,8 @@
-use diesel::prelude::*;
-use diesel::sql_types::*;
-
-table! {
-    log (id) {
+diesel::table! {
+    logs (id) {
         id -> Integer,
-        created_at -> Timestamptz,
-        type -> Text,
+        created_at -> Timestamp,
+        r#type -> Text,
         message_json -> Jsonb,
     }
 }

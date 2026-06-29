@@ -1,11 +1,8 @@
-use super::schema;
-use chrono::{DateTime, Utc};
+/* use super::schema;
 use diesel::prelude::*;
-use serde_json::Value;
 
 #[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = schema::webhooks)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Webhook {
     pub id: i32,
     pub discord_webhook_id: i64,
@@ -26,9 +23,8 @@ pub struct UpdateWebhook {
     pub banned: Option<bool>,
 }
 
-#[derive(Debug, PartialEq, Eq, FromSqlRow, AsExpression)]
-#[diesel(sql_type = "Text")]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Status {
     Pending,
     Completed,
-}
+} */

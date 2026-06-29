@@ -1,13 +1,10 @@
-use diesel::prelude::*;
-use diesel::sql_types::*;
-
-table! {
+diesel::table! {
     queue (id) {
         id -> Integer,
         webhook_id -> Integer,
-        created_at -> Timestamptz,
+        created_at -> Timestamp,
         message -> Jsonb,
         status -> Text,
-        updated_at -> Timestamptz,
+        updated_at -> Timestamp,
     }
 }

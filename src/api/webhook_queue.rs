@@ -4,11 +4,11 @@ use sled::Db;
 use std::sync::Arc;
 use tokio::{
     sync::{
-        mpsc::{channel, Receiver, Sender},
         Semaphore,
+        mpsc::{Receiver, Sender, channel},
     },
     task,
-    time::{sleep, Duration},
+    time::{Duration, sleep},
 };
 
 const FALLBACK_COOLDOWN_SECS: u64 = 10;
@@ -40,6 +40,14 @@ pub fn start_webhook_queue() -> QueueSender {
     queue_sender
 }
 
+fn get_retry_seconds(response_headers: &[(String, String)]) -> u64 {
+    response_headers
+        .iter()
+        .find(|(name, _)| name.eq_ignore_ascii_case("Retry-After"))
+        .and_then(|(_, value)| value.parse::<u64>().ok())
+        .unwrap_or(FALLBACK_COOLDOWN_SECS)
+}
+
 // TODO: idk take a look at the expects maybe i doubt sum will go wrong tho
 async fn webhook_queue_handler(mut queue_receiver: QueueReceiver, db: Arc<Db>) {
     let concurrency_limiter = Arc::new(Semaphore::new(CONCURRENCY_LIMIT));
@@ -63,15 +71,11 @@ async fn webhook_queue_handler(mut queue_receiver: QueueReceiver, db: Arc<Db>) {
                 match response {
                     Ok((status, _, response)) => match status.code {
                         429 => {
-                            let retry_after = response
-                                .headers
-                                .get("Retry-After")
-                                .and_then(|retry_after| retry_after.parse::<u64>().ok())
-                                .unwrap_or(FALLBACK_COOLDOWN_SECS);
+                            let retry_after = get_retry_seconds(&response.headers);
 
                             sleep(Duration::from_secs(retry_after)).await;
 
-                            println!("queueed");
+                            println!("queued");
                         }
                         _ => {
                             db.remove(id.to_be_bytes())

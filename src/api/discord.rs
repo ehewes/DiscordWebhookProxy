@@ -2,7 +2,7 @@ use super::webhook_queue::{QueueSender, Webhook};
 use super::{ApiError, ApiResult};
 use rocket::post;
 use rocket::serde::json::serde_json;
-use rocket::{http::Status, serde::json::Json, State};
+use rocket::{State, http::Status, serde::json::Json};
 
 #[post("/webhook/<webhook_id>/<webhook_token>", data = "<body>")]
 pub async fn webhook_proxy(
@@ -61,14 +61,7 @@ pub fn forward_webhook_request(
     Ok((response_status_code, response_body, response))
 }
 
-fn status_from_code(code: i32) -> ApiResult<Status> {
-    let code: u16 = code.try_into().map_err(|_| {
-        ApiError::message(
-            Status::InternalServerError,
-            "Failed to convert the status code",
-        )
-    })?;
-
+fn status_from_code(code: u16) -> ApiResult<Status> {
     let status = Status::from_code(code).ok_or_else(|| {
         ApiError::message(
             Status::InternalServerError,
