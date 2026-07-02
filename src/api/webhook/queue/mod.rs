@@ -20,25 +20,30 @@ const DEFAULT_CONCURRENCY_LIMIT: usize = 10;
 type QueueSender = Sender<Webhook>;
 type QueueReceiver = Receiver<Webhook>;
 
-impl Default for WebhookQueue {
-    fn default() -> Self {
-        let (sender, _queue_handle) = start_webhook_queue();
-        let database = WebhookQueueDatabase::open();
-
-        WebhookQueue {
-            database,
-            sender,
-            _queue_handle,
-        }
-    }
-}
 pub struct WebhookQueue {
-    database: WebhookQueueDatabase,
+    database: Arc<WebhookQueueDatabase>,
     sender: QueueSender,
     _queue_handle: JoinHandle<()>,
 }
 
+impl Default for WebhookQueue {
+    fn default() -> Self {
+        WebhookQueue::new()
+    }
+}
+
 impl WebhookQueue {
+    fn new() -> Self {
+        let (sender, _queue_handle) = start_webhook_queue();
+        let database = WebhookQueueDatabase::open();
+
+        WebhookQueue {
+            database: Arc::new(database),
+            sender,
+            _queue_handle,
+        }
+    }
+
     pub async fn send(&self, webhook: Webhook) -> Result<u64, SendError<Webhook>> {
         let id_future = self.database.insert(webhook.clone());
 

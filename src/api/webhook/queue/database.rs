@@ -1,15 +1,34 @@
 use super::super::Webhook;
 use sled::Db;
-use std::{process, sync::OnceLock};
+use std::{process, sync::OnceLock, sync::Arc};
 use tokio::task;
-use tracing::{error, info};
+use tracing::{error};
 
+const SLED_DB_DIRECTORY: &str = "/var/lib/discord-webhook-proxy/queue-sled";
 static QUEUE_SLED_PATH: OnceLock<String> = OnceLock::new();
+static WEBHOOK_QUEUE_DATABASE: OnceLock<Db> = OnceLock::new();
+
+fn get_webhook_queue_database() -> Db {
+    WEBHOOK_QUEUE_DATABASE
+        .get_or_init(|| {
+match sled::open(get_queue_sled_path()) {
+            Ok(database) => database,
+
+            Err(error) => {
+                error!("Failed to open sled database for the queue, see: {error:#?}");
+
+                process::exit(1)
+            }
+        }
+
+})
+        .clone()
+}
 
 fn get_queue_sled_path() -> String {
     QUEUE_SLED_PATH.get().cloned().unwrap_or_else(|| {
         let pid = process::id();
-        let path = format!("/tmp/discord-webhook-proxy/queue-sled-{}", pid);
+        let path = format!("{SLED_DB_DIRECTORY}-{pid}");
 
         if QUEUE_SLED_PATH.set(path).is_err() {
             error!("Failed to set QUEUE_SLED_PATH: already set");
@@ -28,21 +47,12 @@ fn get_queue_sled_path() -> String {
 }
 
 pub struct WebhookQueueDatabase {
-    database: Db,
+    database: Arc<Db>,
 }
 
 impl WebhookQueueDatabase {
     pub fn open() -> Self {
-        let database = match sled::open(get_queue_sled_path()) {
-            Ok(database) => database,
-            Err(error) => {
-                error!("Failed to open sled database for the queue, see: {error:#?}");
-
-                process::exit(1)
-            }
-        };
-
-        Self { database }
+        Self { database: Arc::new(get_webhook_queue_database()) }
     }
 
     pub async fn insert(&self, webhook: Webhook) -> u64 {
@@ -94,7 +104,7 @@ impl WebhookQueueDatabase {
         }
     }
 
-    pub async fn remove(&self, id: u64) {
+    /* pub async fn remove(&self, id: u64) {
         let database = self.database.clone();
 
         let result = task::spawn_blocking(move || database.remove(id.to_be_bytes())).await;
@@ -139,5 +149,5 @@ impl WebhookQueueDatabase {
                 None
             }
         }
-    }
+    } */
 }
