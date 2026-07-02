@@ -1,78 +1,45 @@
-use super::webhook_queue::{QueueSender, Webhook};
-use super::{ApiError, ApiResult};
+use super::webhook::{Webhook, WebhookBody, WebhookQueue};
+use super::{ApiError, ApiResult, webhook::forward_webhook};
 use rocket::post;
 use rocket::serde::json::serde_json;
 use rocket::{State, http::Status, serde::json::Json};
-use tracing::info;
 
 #[post("/webhook/<webhook_id>/<webhook_token>", data = "<body>")]
 pub async fn webhook_proxy(
     webhook_id: u64,
     webhook_token: &str,
-    body: Json<serde_json::Value>,
-    queue_sender: &State<QueueSender>,
-) -> ApiResult<(Status, Json<serde_json::Value>)> {
-    let (response_status, response_body, _) =
-        forward_webhook_request(webhook_id, webhook_token, &body.to_string())?;
+    body: Json<WebhookBody>,
+    webhook_queue: &State<WebhookQueue>,
+) -> ApiResult<(Status, Option<Json<serde_json::Value>>)> {
+    let webhook = Webhook {
+        id: webhook_id,
+        token: webhook_token.to_string(),
+        body: body.0,
+    };
+
+    let (response_status, response_body, _) = forward_webhook(&webhook)?;
 
     match response_status.code {
         429 => {
-            queue_sender
-                .send(Webhook {
-                    id: webhook_id,
-                    token: webhook_token.to_string(),
-                    body: body.to_string(),
-                })
-                .await
-                .map_err(|_| {
-                    ApiError::message(Status::InternalServerError, "Failed to queue request")
-                })?;
+            let queue_id = webhook_queue.send(webhook).await.map_err(|_| {
+                ApiError::message(Status::InternalServerError, "Failed to queue request")
+            })?;
 
-            Ok((Status::Accepted, Json(serde_json::json!({"queued": true}))))
+            Ok((
+                Status::Accepted,
+                Some(Json(serde_json::json!({
+                    "queueId": queue_id,
+                }))),
+            ))
         }
         _ => {
-            let response_body: serde_json::Value =
-                serde_json::from_str::<serde_json::Value>(&response_body)
-                    .map_or(serde_json::json!({}), |body| body);
+            if response_status == Status::NoContent {
+                return Ok((response_status, None));
+            }
 
-            Ok((response_status, Json(response_body)))
+            let response_body = serde_json::from_str::<serde_json::Value>(&response_body).ok();
+
+            Ok((response_status, response_body.map(Json)))
         }
     }
-}
-
-pub fn forward_webhook_request(
-    webhook_id: u64,
-    webhook_token: &str,
-    body: &str,
-) -> Result<(Status, String, minreq::Response), ApiError> {
-    let url = format!("https://discord.com/api/webhooks/{webhook_id}/{webhook_token}");
-
-    let response = minreq::post(&url)
-        .with_header("Content-Type", "application/json")
-        .with_body(body)
-        .send()
-        .map_err(|_| ApiError::message(Status::InternalServerError, "Failed to forward request"))?;
-
-    let response_status_code = status_from_code(response.status_code)?;
-    let response_body = response
-        .as_str()
-        .map_err(|_| ApiError::message(Status::InternalServerError, "Failed to encode the body"))?
-        .to_string();
-
-    info!(
-        "Proxied request:\n- Webhook ID: {webhook_id}\n- Status Code: {response_status_code}\n- Webhook Body: {body:#?}"
-    );
-
-    Ok((response_status_code, response_body, response))
-}
-
-fn status_from_code(code: u16) -> ApiResult<Status> {
-    let status = Status::from_code(code).ok_or_else(|| {
-        ApiError::message(
-            Status::InternalServerError,
-            "Failed to convert the status code",
-        )
-    })?;
-
-    Ok(status)
 }

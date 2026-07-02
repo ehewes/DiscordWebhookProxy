@@ -1,12 +1,11 @@
-pub(super) mod structs;
 pub mod discord;
-pub mod webhook_queue;
+pub mod webhook;
 
 use rocket::{
+    Request, Response,
     http::Status,
     response,
-    serde::{json::serde_json::json, Serialize},
-    Request, Response,
+    serde::{Serialize, json::serde_json::json},
 };
 
 pub type ApiResult<R> = Result<R, ApiError>;

@@ -1,8 +1,22 @@
-/* use rocket::serde::{Deserialize, Serialize};
+mod forward_webhook;
+pub use forward_webhook::forward_webhook;
 
-#[derive(Serialize, Deserialize)]
+mod queue;
+pub use queue::WebhookQueue;
+
+use rocket::serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct DiscordWebhookBody {
+pub struct Webhook {
+    pub id: u64,
+    pub token: String,
+    pub body: WebhookBody,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct WebhookBody {
     content: Option<String>,
     username: Option<String>,
     avatar_url: Option<String>,
@@ -11,7 +25,7 @@ pub struct DiscordWebhookBody {
     allowed_mentions: Option<AllowedMentions>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Embed {
     title: Option<String>,
@@ -25,20 +39,20 @@ pub struct Embed {
     fields: Option<Vec<Field>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Footer {
     text: String,
     icon_url: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Image {
     url: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Author {
     name: String,
@@ -46,7 +60,7 @@ pub struct Author {
     icon_url: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Field {
     name: String,
@@ -54,10 +68,10 @@ pub struct Field {
     inline: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct AllowedMentions {
     parse: Option<Vec<String>>,
     roles: Option<Vec<String>>,
     users: Option<Vec<String>>,
-} */
+}

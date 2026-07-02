@@ -72,7 +72,6 @@ in
                   backend = mkOption {
                     type = types.enum [
                       "diesel"
-                      "sled"
                     ];
                     default = "diesel";
 

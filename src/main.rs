@@ -1,5 +1,5 @@
 use discord_webhook_proxy::{
-    api::{discord::webhook_proxy, webhook_queue::start_webhook_queue},
+    api::{discord::webhook_proxy, webhook::WebhookQueue},
     setup_tracing,
 };
 
@@ -7,10 +7,8 @@ use discord_webhook_proxy::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_tracing();
 
-    let queue_sender = start_webhook_queue();
-
     rocket::build()
-        .manage(queue_sender)
+        .manage(WebhookQueue::default())
         .mount("/", rocket::routes![webhook_proxy])
         .launch()
         .await?;
