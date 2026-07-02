@@ -40,7 +40,6 @@ in
             enable = mkEnableOption "discord-webhook-proxy instance";
 
             proxyServer = mkOption {
-              default = { };
               description = "Webhook proxy server settings";
 
               type = types.submodule {
@@ -63,8 +62,37 @@ in
               };
             };
 
+            queue = mkOption {
+              description = "Webhook proxy queue settings";
+
+              type = types.submodule {
+                options = {
+                  size = mkOption {
+                    type = types.int;
+                    default = 50000;
+
+                    description = "Size";
+                  };
+
+                  fallback_cooldown_secs = mkOption {
+                    type = types.int;
+                    default = 10;
+
+                    description = "Seconds to wait for cooldown if retry_after header doesnt exist";
+                  };
+
+                  concurrency_limit = mkOption {
+                    type = types.int;
+                    default = 10;
+
+                    description = "Concurrency limit";
+                  };
+
+                };
+              };
+            };
+
             database = mkOption {
-              default = { };
               description = "Database configuration";
 
               type = types.submodule {
