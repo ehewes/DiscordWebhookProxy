@@ -10,8 +10,8 @@ rustPlatform.buildRustPackage rec {
   src = fetchFromGitHub {
     owner = "ehewes";
     repo = "DiscordWebhookProxy";
-    rev = "81fb6a16b9cb7b02f6b7d2930980b0dd6e97a488";
-    hash = "sha256-fKgjDp6QftZlvj3Z8xx5tTOdNKMgk23OlJKos2GouVA=";
+    rev = "1bbb412cbbd1aedef25f5a32fe61a6f7d6870af5";
+    hash = "sha256-gG6OkHj0Nwk2tNtsQ3aGp5CFUA24VFSxgLpZL77KNPE=";
   };
 
   cargoLock.lockFile = src + /Cargo.lock;
