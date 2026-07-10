@@ -1,8 +1,13 @@
 mod tracing;
 pub use tracing::setup as setup_tracing;
 
-pub mod api;
-pub mod database;
+mod api;
+
+pub use api::webhook::queue::{WebhookQueue, process::queue_process_database};
+
+pub mod rocket_routes {
+    pub use super::api::discord::webhook_proxy;
+}
 
 pub(crate) mod util_macros {
     macro_rules! read_cfg_env_var {

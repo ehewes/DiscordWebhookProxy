@@ -1,6 +1,0 @@
-CREATE TABLE logs (
-    id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    log_type TEXT NOT NULL,
-    message JSONB NOT NULL
-);

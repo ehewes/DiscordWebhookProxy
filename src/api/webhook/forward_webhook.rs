@@ -3,7 +3,6 @@ use super::super::{
     webhook::{Webhook, get_fallback_cooldown_secs},
 };
 use rocket::http::Status;
-use tracing::info;
 
 const DISCORD_API_URL: &str = "https://discord.com/api";
 
@@ -31,11 +30,6 @@ pub async fn forward_webhook(webhook: &Webhook) -> Result<(Status, String, u64),
         .to_string();
 
     let retry_after_secs = get_retry_after_secs_from_header(&response.headers);
-
-    info!(
-        "Proxied request:\n- Webhook ID: {}\n- Status Code: {response_status_code}\n- Webhook Body: {:#?}",
-        webhook.id, webhook.body
-    );
 
     Ok((response_status_code, response_body, retry_after_secs))
 }

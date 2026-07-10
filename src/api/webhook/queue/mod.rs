@@ -1,7 +1,10 @@
-mod database;
-use database::WebhookQueueDatabase;
+pub mod database;
+pub mod process;
 
-use super::super::webhook::{Webhook, forward_webhook};
+use super::super::webhook::{
+    Webhook,
+    queue::{database::WebhookQueueDatabase, process::queue_process_webhook},
+};
 use std::sync::Arc;
 use tokio::{
     sync::{
@@ -9,15 +12,14 @@ use tokio::{
         mpsc::{Receiver, Sender, channel, error::SendError},
     },
     task::{self, JoinHandle},
-    time::{Duration, sleep},
 };
 use tracing::{error, info};
 
 const DEFAULT_QUEUE_SIZE: usize = 50_000;
 const DEFAULT_CONCURRENCY_LIMIT: usize = 10;
 
-type QueueSender = Sender<Webhook>;
-type QueueReceiver = Receiver<Webhook>;
+type QueueSender = Sender<(Webhook, u64)>;
+type QueueReceiver = Receiver<(Webhook, u64)>;
 
 pub struct WebhookQueue {
     database: Arc<WebhookQueueDatabase>,
@@ -43,12 +45,16 @@ impl WebhookQueue {
         }
     }
 
-    pub async fn send(&self, webhook: Webhook) -> Result<u64, SendError<Webhook>> {
-        let id_future = self.database.insert(webhook.clone());
+    pub fn get_database(&self) -> &WebhookQueueDatabase {
+        &self.database
+    }
 
-        self.sender.send(webhook).await?;
+    pub async fn send(&self, webhook: Webhook) -> Result<u64, SendError<(Webhook, u64)>> {
+        let queue_id = self.database.insert(webhook.clone()).await;
 
-        Ok(id_future.await)
+        self.sender.send((webhook, queue_id)).await?;
+
+        Ok(queue_id)
     }
 }
 
@@ -77,7 +83,7 @@ macro_rules! read_cfg_env_var {
 
 pub fn start_webhook_queue() -> (QueueSender, JoinHandle<()>) {
     let queue_size: usize = read_cfg_env_var!("QUEUE_SIZE", usize, DEFAULT_QUEUE_SIZE);
-    let (queue_sender, queue_receiver) = channel::<Webhook>(queue_size);
+    let (queue_sender, queue_receiver) = channel::<(Webhook, u64)>(queue_size);
 
     let webhook_queue_database = WebhookQueueDatabase::open();
 
@@ -97,7 +103,7 @@ async fn webhook_queue_handler(
 
     let concurrency_limiter = Arc::new(Semaphore::new(concurrency_limit));
 
-    while let Some(webhook) = queue_receiver.recv().await {
+    while let Some((webhook, queue_id)) = queue_receiver.recv().await {
         let permit = match concurrency_limiter.clone().acquire_owned().await {
             Ok(permit) => permit,
             Err(error) => {
@@ -110,37 +116,13 @@ async fn webhook_queue_handler(
         let database = database.clone();
 
         task::spawn(async move {
-            loop {
-                let response = forward_webhook(&webhook).await;
-
-                match response {
-                    Ok((status, _body, retry_after)) => match status.code {
-                        429 => {
-                            sleep(Duration::from_secs(retry_after)).await;
-
-                            let record_id_future = database.insert(webhook.clone());
-
-                            info!(
-                                "Queued: Internal ID: {}, Webhook ID: {}",
-                                record_id_future.await,
-                                webhook.id
-                            );
-                        }
-                        _ => {
-                            info!(
-                                "Successfully proxied request: \nWebhook ID: {}\nWebhook Body: {:#?}",
-                                webhook.id, webhook.body
-                            );
-
-                            break;
-                        }
-                    },
-
-                    Err(error) => {
-                        error!("Failed to proxy request, skipping. See: {error:#?}");
-
-                        continue;
-                    }
+            match queue_process_webhook(&database, &webhook, queue_id).await {
+                Ok(_) => (),
+                Err(error) => {
+                    error!(
+                        "Failed to proxy request, keeping it in database [Internal ID: {}\nWebhook ID: {}\nWebhook Body: {:#?}]. See: {:#?}",
+                        queue_id, webhook.id, webhook.body, error
+                    )
                 }
             }
 

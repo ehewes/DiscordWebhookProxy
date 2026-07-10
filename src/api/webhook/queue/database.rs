@@ -46,6 +46,7 @@ fn get_queue_sled_path() -> String {
     })
 }
 
+#[derive(Clone, Debug)]
 pub struct WebhookQueueDatabase {
     database: Arc<Db>,
 }
@@ -104,7 +105,7 @@ impl WebhookQueueDatabase {
         }
     }
 
-    /* pub async fn remove(&self, id: u64) {
+     pub async fn remove(&self, id: u64) {
         let database = self.database.clone();
 
         let result = task::spawn_blocking(move || database.remove(id.to_be_bytes())).await;
@@ -123,7 +124,12 @@ impl WebhookQueueDatabase {
         }
     }
 
-    pub async fn get(&self, id: u64) -> Option<Webhook> {
+    pub fn iter(&self) -> sled::Iter {
+        self.database.iter()
+    }
+}
+
+  /* pub async fn get(&self, id: u64) -> Option<Webhook> {
         let database = self.database.clone();
 
         let result = task::spawn_blocking(move || database.get(id.to_be_bytes())).await;
@@ -149,5 +155,5 @@ impl WebhookQueueDatabase {
                 None
             }
         }
-    } */
-}
+    }  */
+

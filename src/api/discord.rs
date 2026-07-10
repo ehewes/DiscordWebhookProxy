@@ -1,6 +1,6 @@
 use super::{
     ApiError, ApiResult,
-    webhook::{Webhook, WebhookBody, WebhookQueue, forward_webhook},
+    webhook::{Webhook, WebhookBody, queue::WebhookQueue, forward_webhook},
 };
 use rocket::post;
 use rocket::serde::json::serde_json;
@@ -21,7 +21,11 @@ pub async fn webhook_proxy(
 
     let (status, response_body, _retry_after_secs) = forward_webhook(&webhook).await?;
 
-    if status.code == 429 || status.code >= 500 {
+    if status == Status::NoContent {
+        return Ok((Status::NoContent, None));
+    }
+
+    if status.code == 429 {
         let queue_id = webhook_queue.send(webhook).await.map_err(|_| {
             ApiError::message(Status::InternalServerError, "Failed to queue request")
         })?;
@@ -32,10 +36,6 @@ pub async fn webhook_proxy(
                 "queueId": queue_id,
             }))),
         ));
-    }
-
-    if status == Status::NoContent {
-        return Ok((Status::NoContent, None));
     }
 
     let parsed = if response_body.trim().is_empty() {
