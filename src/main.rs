@@ -1,7 +1,7 @@
 use discord_webhook_proxy::{
     WebhookQueue, queue_process_database, rocket_routes::webhook_proxy, setup_tracing,
 };
-use rocket::{catch, fairing::AdHoc, catchers};
+use rocket::{catch, catchers, fairing::AdHoc};
 
 #[catch(404)]
 fn not_found() -> &'static str {
