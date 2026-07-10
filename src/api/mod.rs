@@ -13,7 +13,8 @@ pub type ApiResult<R> = Result<R, ApiError>;
 #[derive(Serialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct ApiError {
-    code: u16,
+    status: Status,
+    status_code: u16,
     message: String,
 }
 
@@ -23,7 +24,8 @@ impl ApiError {
         S: Into<String>,
     {
         Self {
-            code: status.code,
+            status,
+            status_code: status.code,
             message: message.into(),
         }
     }
@@ -34,15 +36,18 @@ impl ApiError {
     {
         Self::new(status, message)
     }
+
+    pub fn is_retryable(&self) -> bool {
+        matches!(self.status_code, 429 | 500 | 502 | 503 | 504)
+    }
 }
 
 impl<'a> response::Responder<'a, 'a> for ApiError {
     fn respond_to(self, request: &'a Request<'_>) -> response::Result<'a> {
-        let status = Status::from_code(self.code).unwrap_or_default();
         let error = json!({ "error": self });
 
         Response::build_from(error.respond_to(request)?)
-            .status(status)
+            .status(self.status)
             .ok()
     }
 }

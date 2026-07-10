@@ -4,74 +4,27 @@ pub use forward_webhook::forward_webhook;
 mod queue;
 pub use queue::WebhookQueue;
 
-use rocket::serde::{Deserialize, Serialize};
+mod structs;
+pub use structs::*;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Webhook {
-    pub id: u64,
-    pub token: String,
-    pub body: WebhookBody,
+use crate::util_macros::read_cfg_env_var;
+
+pub const DEFAULT_FALLBACK_COOLDOWN_SECS: u64 = 10;
+
+pub fn get_fallback_cooldown_secs() -> u64 {
+    read_cfg_env_var!(
+        "FALLBACK_COOLDOWN_SECS",
+        u64,
+        DEFAULT_FALLBACK_COOLDOWN_SECS
+    )
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct WebhookBody {
-    content: Option<String>,
-    username: Option<String>,
-    avatar_url: Option<String>,
-    tts: Option<bool>,
-    embeds: Option<Vec<Embed>>,
-    allowed_mentions: Option<AllowedMentions>,
-}
+pub fn get_retry_seconds_from_headers(response_headers: &[(String, String)]) -> u64 {
+    let fallback_cooldown_secs = get_fallback_cooldown_secs();
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Embed {
-    title: Option<String>,
-    description: Option<String>,
-    url: Option<String>,
-    color: Option<u32>,
-    footer: Option<Footer>,
-    image: Option<Image>,
-    thumbnail: Option<Image>,
-    author: Option<Author>,
-    fields: Option<Vec<Field>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Footer {
-    text: String,
-    icon_url: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Image {
-    url: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Author {
-    name: String,
-    url: Option<String>,
-    icon_url: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct Field {
-    name: String,
-    value: String,
-    inline: Option<bool>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(crate = "rocket::serde")]
-pub struct AllowedMentions {
-    parse: Option<Vec<String>>,
-    roles: Option<Vec<String>>,
-    users: Option<Vec<String>>,
+    response_headers
+        .iter()
+        .find(|(name, _)| name.eq_ignore_ascii_case("Retry-After"))
+        .and_then(|(_, value)| value.parse::<u64>().ok())
+        .unwrap_or(fallback_cooldown_secs)
 }

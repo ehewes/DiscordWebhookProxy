@@ -13,7 +13,6 @@ use tokio::{
 };
 use tracing::{error, info};
 
-const DEFAULT_FALLBACK_COOLDOWN_SECS: u64 = 10;
 const DEFAULT_QUEUE_SIZE: usize = 50_000;
 const DEFAULT_CONCURRENCY_LIMIT: usize = 10;
 
@@ -89,20 +88,6 @@ pub fn start_webhook_queue() -> (QueueSender, JoinHandle<()>) {
     (queue_sender, handle)
 }
 
-fn get_retry_seconds(response_headers: &[(String, String)]) -> u64 {
-    let fallback_cooldown_secs = read_cfg_env_var!(
-        "FALLBACK_COOLDOWN_SECS",
-        u64,
-        DEFAULT_FALLBACK_COOLDOWN_SECS
-    );
-
-    response_headers
-        .iter()
-        .find(|(name, _)| name.eq_ignore_ascii_case("Retry-After"))
-        .and_then(|(_, value)| value.parse::<u64>().ok())
-        .unwrap_or(fallback_cooldown_secs)
-}
-
 async fn webhook_queue_handler(
     mut queue_receiver: QueueReceiver,
     database: Arc<WebhookQueueDatabase>,
@@ -126,29 +111,25 @@ async fn webhook_queue_handler(
 
         task::spawn(async move {
             loop {
-                let record_id_future = database.insert(webhook.clone());
-                let response = forward_webhook(&webhook);
+                let response = forward_webhook(&webhook).await;
 
                 match response {
-                    Ok((status, _, response)) => match status.code {
+                    Ok((status, _body, retry_after)) => match status.code {
                         429 => {
-                            let retry_after = get_retry_seconds(&response.headers);
-
                             sleep(Duration::from_secs(retry_after)).await;
 
+                            let record_id_future = database.insert(webhook.clone());
+
                             info!(
-                                "Queued: retrying in {} seconds, Internal ID: {}, Webhook ID: {}",
-                                retry_after,
+                                "Queued: Internal ID: {}, Webhook ID: {}",
                                 record_id_future.await,
                                 webhook.id
                             );
                         }
                         _ => {
                             info!(
-                                "Successfully proxied request: \nInternal ID: {}\nWebhook ID: {}\nWebhook Body: {:#?}",
-                                webhook.id,
-                                record_id_future.await,
-                                webhook.body
+                                "Successfully proxied request: \nWebhook ID: {}\nWebhook Body: {:#?}",
+                                webhook.id, webhook.body
                             );
 
                             break;
