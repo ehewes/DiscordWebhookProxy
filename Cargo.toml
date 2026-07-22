@@ -2,7 +2,7 @@
 name = "discord-webhook-proxy"
 version = "1.0.0"
 edition = "2024"
-authors = [ "ehewes", "maefall" ]
+authors = ["ehewes", "maefall"]
 description = "Discord webhook proxy with rate-limit queueing, persistent storage, and full API compatibility."
 license = "MIT"
 readme = "README.md"
@@ -24,7 +24,7 @@ categories = [
 reqwest = { version = "0.13.4", default-features = false, features = [
   "http2",
   "json",
-  "native-tls"
+  "rustls"
 ] }
 rocket = { version = "0.5.1", default-features = false, features = ["json"] }
 serde_json = { version = "1.0.151", default-features = false, features = ["std"] }
