@@ -1,48 +1,67 @@
 # DiscordWebhookProxy
+
 [![Rust-Proxy-Banner.png](https://i.postimg.cc/Pq6cbg7T/Rust-Proxy-Banner.png)](https://postimg.cc/FfLDNBmB)
-<p align="center">
-	WIP
-</p>
+
+A lightweight Discord webhook proxy with **async forwarding**, **automatic rate-limit queueing**, **persistent crash recovery**, and full Discord API compatibility.
 
 ---
 
-## Description
-DiscordWebhookProxy is a powerful Discord proxy service designed for Roblox, built to prevent abuse and provide secure relaying. It offers complete server management, allowing users to set hardware usage caps and ban abusive users via an intuitive dashboard. Easily deployed with one-click options for Docker, Nix, or Vercel.
+## Features
+
+- ⚡ **Async, non-blocking** — built on tokio + reqwest, won't stall under load
+- 📦 **Automatic rate-limit queue** — when Discord responds 429, requests are queued and retried with configurable concurrency
+- 💾 **Persistent queue storage** — backed by Sled (embedded DB); survives restarts and crashes
+- 🔄 **Crash recovery** — on startup, any unfinished queued webhooks are re-processed automatically
+- 🔁 **Drop-in replacement** — same payload format, same response codes (GET + POST)
+- 🔧 **Configurable via environment variables**
 
 ---
-## Commands & Usage
-### Deployment Commands
-#### Deploy with Docker
-Build the container
+
+## Quick Start
+
+### Docker
+
 ```bash
 docker build -t discord-webhook-proxy .
-```
-Deploy the container
-```bash
 docker run -p 8000:8000 discord-webhook-proxy
 ```
 
-#### Deploy with Nix
+### From source
+
 ```bash
-nix build .#dockerImage
+cargo run --release
 ```
+
+---
+
+## Usage
+
+### GET — fetch webhook info
+
 ```bash
-nix run .#dockerImage
+curl http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN
 ```
 
-### Usage
-To utilise a domain for your webhook you'd have to point your domain to the server IP and port 8000. You can do this by creating a record in your DNS settings.
+### POST — send a webhook message
 
-``
-http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN
-``
-
-#### Curl Example
-```
-curl -X POST \
-  http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN \
-  -H 'Content-Type: application/json' \
+```bash
+curl -X POST http://localhost:8000/webhook/WEBHOOK_ID/WEBHOOK_TOKEN \
+  -H "Content-Type: application/json" \
   -d '{
-    "content": "Hello, world!"
-}'
+    "content": "Hello, world!",
+    "username": "My Bot",
+    "embeds": [{
+      "title": "Embed Title",
+      "description": "Embed description",
+      "color": 3447003
+    }]
+  }'
 ```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `QUEUE_SIZE` | `50000` | Max queued requests before blocking |
+| `CONCURRENCY_LIMIT` | `20` | Max concurrent outbound requests to Discord |
+| `FALLBACK_COOLDOWN_SECS` | `10` | Seconds to wait before retry when Retry-After header is missing |
