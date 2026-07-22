@@ -2,20 +2,48 @@
 name = "discord-webhook-proxy"
 version = "1.0.0"
 edition = "2021"
-authors = ["ehewes, bordomantra"]
-description = "DiscordWebhookProxy is a powerful Discord proxy service designed for Roblox, built to prevent abuse and provide secure relaying."
+authors = ["ehewes", "maefall"]
+description = "Discord webhook proxy with rate-limit queueing, persistent storage, and full API compatibility."
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/ehewes/DiscordWebhookProxy"
 repository = "https://github.com/ehewes/DiscordWebhookProxy"
-keywords = ["bot", "cli", "discord", "proxy", "webhook"]
-categories = ["command-line-utilities"]
+keywords = [
+  "async",
+  "discord",
+  "proxy",
+  "webhook",
+]
+categories = [
+  "api-bindings",
+  "network-programming",
+  "web-programming::http-server",
+]
 
 [dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13.4", default-features = false, features = [
+  "http2",
+  "json",
+  "native-tls"
+] }
 rocket = { version = "0.5.1", default-features = false, features = ["json"] }
-serde_json = "1.0.140"
-sled = "0.34"
-tokio = "1.44.1"
-tracing = { version = "0.1.41", features = ["attributes", "std"] }
-tracing-subscriber = { version = "0.3.20", default-features = false, features = ["ansi", "env-filter", "fmt", "std"] }
+serde_json = { version = "1.0.151", default-features = false, features = ["std"] }
+sled = { version = "0.34.7", default-features = false, features = [
+  "compression"
+] }
+tokio = { version = "1.53.1", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+  "time"
+] }
+tracing = { version = "0.1.44", default-features = false, features = [
+  "attributes",
+  "std"
+] }
+tracing-subscriber = { version = "0.3.23", default-features = false, features = [
+  "ansi",
+  "env-filter",
+  "fmt",
+  "std"
+] }

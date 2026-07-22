@@ -82,3 +82,21 @@ pub async fn webhook_info(
 
     Ok(Json(parsed))
 }
+
+#[post("/api/webhooks/<webhook_id>/<webhook_token>", data = "<body>")]
+pub async fn webhook_proxy_discord_compatibility_path(
+    webhook_id: u64,
+    webhook_token: &str,
+    body: Json<WebhookBody>,
+    webhook_queue: &State<WebhookQueue>,
+) -> ApiResult<(Status, Json<serde_json::Value>)> {
+    webhook_proxy(webhook_id, webhook_token, body, webhook_queue).await
+}
+
+#[get("/api/webhooks/<webhook_id>/<webhook_token>")]
+pub async fn webhook_info_discord_compatibility_path(
+    webhook_id: u64,
+    webhook_token: &str,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    webhook_info(webhook_id, webhook_token).await
+}
