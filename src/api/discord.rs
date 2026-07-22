@@ -1,6 +1,6 @@
 use super::{
     ApiError, ApiResult,
-    webhook::{Webhook, WebhookBody, queue::WebhookQueue, forward_webhook},
+    webhook::{Webhook, WebhookBody, forward_webhook, queue::WebhookQueue},
 };
 use rocket::post;
 use rocket::serde::json::serde_json;
@@ -12,7 +12,7 @@ pub async fn webhook_proxy(
     webhook_token: &str,
     body: Json<WebhookBody>,
     webhook_queue: &State<WebhookQueue>,
-) -> ApiResult<(Status, Option<Json<serde_json::Value>>)> {
+) -> ApiResult<(Status, Json<serde_json::Value>)> {
     let webhook = Webhook {
         id: webhook_id,
         token: webhook_token.to_string(),
@@ -22,7 +22,7 @@ pub async fn webhook_proxy(
     let (status, response_body, _retry_after_secs) = forward_webhook(&webhook).await?;
 
     if status == Status::NoContent {
-        return Ok((Status::NoContent, None));
+        return Ok((Status::NoContent, Json(serde_json::json!({}))));
     }
 
     if status.code == 429 {
@@ -32,17 +32,17 @@ pub async fn webhook_proxy(
 
         return Ok((
             Status::Accepted,
-            Some(Json(serde_json::json!({
+            Json(serde_json::json!({
                 "queueId": queue_id,
-            }))),
+            })),
         ));
     }
 
-    let parsed = if response_body.trim().is_empty() {
-        None
+    let parsed: serde_json::Value = if response_body.trim().is_empty() {
+        serde_json::json!({})
     } else {
-        serde_json::from_str::<serde_json::Value>(&response_body).ok()
+        serde_json::from_str(&response_body).unwrap_or_else(|_| serde_json::json!({}))
     };
 
-    Ok((status, parsed.map(Json)))
+    Ok((status, Json(parsed)))
 }
