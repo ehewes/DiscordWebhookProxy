@@ -1,42 +1,21 @@
 [package]
 name = "discord-webhook-proxy"
 version = "1.0.0"
-edition = "2024"
+edition = "2021"
 authors = ["ehewes, bordomantra"]
 description = "DiscordWebhookProxy is a powerful Discord proxy service designed for Roblox, built to prevent abuse and provide secure relaying."
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/ehewes/DiscordRustScraper"
-repository = "https://github.com/ehewes/DiscordRustScraper"
+homepage = "https://github.com/ehewes/DiscordWebhookProxy"
+repository = "https://github.com/ehewes/DiscordWebhookProxy"
 keywords = ["bot", "cli", "discord", "proxy", "webhook"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-chrono = "0.4.45"
-diesel = "2.2.12"
-miette = { version = "7.6.0", features = ["fancy"] }
-
-# API
-minreq = { version = "3.0.0", features = ["https"] }
+reqwest = { version = "0.12", features = ["json"] }
 rocket = { version = "0.5.1", default-features = false, features = ["json"] }
-
-# Serialization & Deserialization
 serde_json = "1.0.140"
-
-# Database
 sled = "0.34"
-thiserror = "2.0.12"
-time = "0.3.40"
 tokio = "1.44.1"
-tracing = { version = "0.1.41", default-features = false, features = [
-  "attributes",
-  "std"
-] }
-
-# Tracing & Errors
-tracing-subscriber = { version = "0.3.20", default-features = false, features = [
-  "ansi",
-  "env-filter",
-  "fmt",
-  "std"
-] }
+tracing = { version = "0.1.41", features = ["attributes", "std"] }
+tracing-subscriber = { version = "0.3.20", default-features = false, features = ["ansi", "env-filter", "fmt", "std"] }

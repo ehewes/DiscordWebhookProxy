@@ -1,11 +1,11 @@
 use super::{
+    webhook::{forward_webhook, queue::WebhookQueue, Webhook, WebhookBody},
+    webhook::{status_from_code, DISCORD_API_URL},
     ApiError, ApiResult,
-    webhook::{Webhook, WebhookBody, forward_webhook, queue::WebhookQueue},
 };
-use crate::api::webhook::{DISCORD_API_URL, status_from_code};
 use rocket::serde::json::serde_json;
-use rocket::{State, http::Status, serde::json::Json};
 use rocket::{get, post};
+use rocket::{http::Status, serde::json::Json, State};
 
 #[post("/webhook/<webhook_id>/<webhook_token>", data = "<body>")]
 pub async fn webhook_proxy(
@@ -33,9 +33,7 @@ pub async fn webhook_proxy(
 
         return Ok((
             Status::Accepted,
-            Json(serde_json::json!({
-                "queueId": queue_id,
-            })),
+            Json(serde_json::json!({"queueId": queue_id})),
         ));
     }
 
@@ -58,17 +56,18 @@ pub async fn webhook_info(
         DISCORD_API_URL, webhook_id, webhook_token
     );
 
-    let response = minreq::get(&url)
+    let client = reqwest::Client::new();
+
+    let response = client
+        .get(&url)
         .send()
+        .await
         .map_err(|_| ApiError::message(Status::BadGateway, "Failed to forward request"))?;
 
-    let status_code = status_from_code(response.status_code)?;
-    let body = response
-        .as_str()
-        .map_err(|_| {
-            ApiError::message(Status::InternalServerError, "Failed to read response body")
-        })?
-        .to_string();
+    let status_code = status_from_code(response.status().as_u16())?;
+    let body = response.text().await.map_err(|_| {
+        ApiError::message(Status::InternalServerError, "Failed to read response body")
+    })?;
 
     if status_code != Status::Ok {
         return Err(ApiError::message(status_code, &body));

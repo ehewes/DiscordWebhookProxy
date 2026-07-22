@@ -1,46 +1,42 @@
 use super::{
-    super::{
-        ApiError,
-        webhook::{Webhook, get_fallback_cooldown_secs},
-    },
-    DISCORD_API_URL, status_from_code,
+    super::ApiError, get_fallback_cooldown_secs, status_from_code, Webhook, DISCORD_API_URL,
 };
 use rocket::http::Status;
 
 pub async fn forward_webhook(webhook: &Webhook) -> Result<(Status, String, u64), ApiError> {
+    let client = reqwest::Client::new();
+
     let url = format!(
         "{}/webhooks/{}/{}",
         DISCORD_API_URL, webhook.id, webhook.token
     );
 
-    let response = minreq::post(&url)
-        .with_header("Content-Type", "application/json")
-        .with_body(serde_json::to_vec(&webhook.body).map_err(|_| {
-            ApiError::message(
-                Status::InternalServerError,
-                "Failed to serialize webhook body",
-            )
-        })?)
+    let response = client
+        .post(&url)
+        .header("Content-Type", "application/json")
+        .json(&webhook.body)
         .send()
+        .await
         .map_err(|_| ApiError::message(Status::BadGateway, "Failed to forward request"))?;
 
-    let response_status_code = status_from_code(response.status_code)?;
-    let response_body = response
-        .as_str()
-        .map_err(|_| ApiError::message(Status::InternalServerError, "Failed to encode the body"))?
-        .to_string();
+    let headers = response.headers().clone();
+    let response_status_code = status_from_code(response.status().as_u16())?;
 
-    let retry_after_secs = get_retry_after_secs_from_header(&response.headers);
+    let response_body = response.text().await.map_err(|_| {
+        ApiError::message(Status::InternalServerError, "Failed to read response body")
+    })?;
+
+    let retry_after_secs = get_retry_after_secs_from_header(&headers);
 
     Ok((response_status_code, response_body, retry_after_secs))
 }
 
-fn get_retry_after_secs_from_header(response_headers: &[(String, String)]) -> u64 {
+fn get_retry_after_secs_from_header(headers: &reqwest::header::HeaderMap) -> u64 {
     let fallback_cooldown_secs = get_fallback_cooldown_secs();
 
-    response_headers
-        .iter()
-        .find(|(name, _)| name.eq_ignore_ascii_case("Retry-After"))
-        .and_then(|(_, value)| value.parse::<u64>().ok())
+    headers
+        .get(reqwest::header::RETRY_AFTER)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(fallback_cooldown_secs)
 }

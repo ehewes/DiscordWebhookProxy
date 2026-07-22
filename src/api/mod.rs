@@ -2,10 +2,10 @@ pub mod discord;
 pub mod webhook;
 
 use rocket::{
-    Request, Response,
     http::Status,
     response,
-    serde::{Serialize, json::serde_json::json},
+    serde::{json::serde_json::json, Serialize},
+    Request, Response,
 };
 
 pub type ApiResult<R> = Result<R, ApiError>;
