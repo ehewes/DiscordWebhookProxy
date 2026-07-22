@@ -8,11 +8,10 @@ A lightweight Discord webhook proxy with **async forwarding**, **automatic rate-
 
 ## Features
 
-- ⚡ **Async, non-blocking** — built on tokio + reqwest, won't stall under load
-- 📦 **Automatic rate-limit queue** — when Discord responds 429, requests are queued and retried with configurable concurrency
-- 💾 **Persistent queue storage** — backed by Sled (embedded DB); survives restarts and crashes
-- 🔄 **Crash recovery** — on startup, any unfinished queued webhooks are re-processed automatically
-- 🔁 **Drop-in replacement** — same payload format, same response codes (GET + POST)
+- 📦 **Automatic rate-limit queue**: when Discord responds 429, requests are queued and retried with configurable concurrency
+- 💾 **Persistent queue storage**: backed by Sled; survives restarts and crashes
+- 🔄 **Crash recovery**: on startup, any unfinished queued webhooks are re-processed automatically
+- 🔁 **Drop-in replacement**: same payload format, same response codes (GET + POST)
 - 🔧 **Configurable via environment variables**
 
 ---
