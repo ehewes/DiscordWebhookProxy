@@ -1,10 +1,11 @@
-use super::super::{
-    ApiError, ApiResult,
-    webhook::{Webhook, get_fallback_cooldown_secs},
+use super::{
+    super::{
+        ApiError,
+        webhook::{Webhook, get_fallback_cooldown_secs},
+    },
+    DISCORD_API_URL, status_from_code,
 };
 use rocket::http::Status;
-
-const DISCORD_API_URL: &str = "https://discord.com/api";
 
 pub async fn forward_webhook(webhook: &Webhook) -> Result<(Status, String, u64), ApiError> {
     let url = format!(
@@ -42,15 +43,4 @@ fn get_retry_after_secs_from_header(response_headers: &[(String, String)]) -> u6
         .find(|(name, _)| name.eq_ignore_ascii_case("Retry-After"))
         .and_then(|(_, value)| value.parse::<u64>().ok())
         .unwrap_or(fallback_cooldown_secs)
-}
-
-fn status_from_code(code: u16) -> ApiResult<Status> {
-    let status = Status::from_code(code).ok_or_else(|| {
-        ApiError::message(
-            Status::InternalServerError,
-            "Failed to convert the status code",
-        )
-    })?;
-
-    Ok(status)
 }

@@ -11,61 +11,61 @@ pub struct Webhook {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct WebhookBody {
-    content: Option<String>,
-    username: Option<String>,
-    avatar_url: Option<String>,
-    tts: Option<bool>,
-    embeds: Option<Vec<Embed>>,
-    allowed_mentions: Option<AllowedMentions>,
+    pub content: Option<String>,
+    pub username: Option<String>,
+    pub avatar_url: Option<String>,
+    pub tts: Option<bool>,
+    pub embeds: Option<Vec<Embed>>,
+    pub allowed_mentions: Option<AllowedMentions>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Embed {
-    title: Option<String>,
-    description: Option<String>,
-    url: Option<String>,
-    color: Option<u32>,
-    footer: Option<Footer>,
-    image: Option<Image>,
-    thumbnail: Option<Image>,
-    author: Option<Author>,
-    fields: Option<Vec<Field>>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub url: Option<String>,
+    pub color: Option<u32>,
+    pub footer: Option<Footer>,
+    pub image: Option<Image>,
+    pub thumbnail: Option<Image>,
+    pub author: Option<Author>,
+    pub fields: Option<Vec<Field>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Footer {
-    text: String,
-    icon_url: Option<String>,
+    pub text: String,
+    pub icon_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Image {
-    url: String,
+    pub url: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Author {
-    name: String,
-    url: Option<String>,
-    icon_url: Option<String>,
+    pub name: String,
+    pub url: Option<String>,
+    pub icon_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Field {
-    name: String,
-    value: String,
-    inline: Option<bool>,
+    pub name: String,
+    pub value: String,
+    pub inline: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct AllowedMentions {
-    parse: Option<Vec<String>>,
-    roles: Option<Vec<String>>,
-    users: Option<Vec<String>>,
+    pub parse: Option<Vec<String>>,
+    pub roles: Option<Vec<String>>,
+    pub users: Option<Vec<String>>,
 }

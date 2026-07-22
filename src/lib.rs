@@ -6,7 +6,7 @@ mod api;
 pub use api::webhook::queue::{WebhookQueue, process::queue_process_database};
 
 pub mod rocket_routes {
-    pub use super::api::discord::webhook_proxy;
+    pub use super::api::discord::{webhook_info, webhook_proxy};
 }
 
 pub(crate) mod util_macros {

@@ -1,5 +1,5 @@
 use discord_webhook_proxy::{
-    WebhookQueue, queue_process_database, rocket_routes::webhook_proxy, setup_tracing,
+    WebhookQueue, queue_process_database, rocket_routes::{webhook_proxy, webhook_info}, setup_tracing,
 };
 use rocket::{catch, catchers, fairing::AdHoc};
 
@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     rocket::build()
         .manage(WebhookQueue::default())
         .register("/", catchers![not_found])
-        .mount("/", rocket::routes![webhook_proxy])
+        .mount("/", rocket::routes![webhook_proxy, webhook_info])
         .attach(AdHoc::on_liftoff(
             "Processing leftover webhook queue",
             |rocket| {
