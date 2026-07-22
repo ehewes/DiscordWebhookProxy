@@ -1,8 +1,8 @@
 [package]
 name = "discord-webhook-proxy"
 version = "1.0.0"
-edition = "2021"
-authors = ["ehewes", "maefall"]
+edition = "2024"
+authors = [ "ehewes", "maefall" ]
 description = "Discord webhook proxy with rate-limit queueing, persistent storage, and full API compatibility."
 license = "MIT"
 readme = "README.md"
